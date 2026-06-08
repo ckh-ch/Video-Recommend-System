@@ -150,4 +150,29 @@ public class DashboardController {
         }
         return result;
     }
+
+    @GetMapping("/user/{userId}/summary")
+    public Map<String, Object> userSummary(@PathVariable Long userId) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("totalBehaviors", dashboardMapper.countUserBehaviors(userId));
+        result.put("totalCategories", dashboardMapper.countUserCategories(userId));
+        result.put("totalViewTime", dashboardMapper.sumUserViewTime(userId));
+        result.put("totalLikes", dashboardMapper.sumUserLikes(userId));
+        return result;
+    }
+
+    @GetMapping("/user/{userId}/category-dist")
+    public List<CategoryDist> userCategoryDist(@PathVariable Long userId) {
+        return dashboardMapper.userCategoryDistribution(userId);
+    }
+
+    @GetMapping("/user/{userId}/behavior-stats")
+    public List<BehaviorStat> userBehaviorStats(@PathVariable Long userId) {
+        return dashboardMapper.userBehaviorStats(userId);
+    }
+
+    @GetMapping("/user/{userId}/hourly-trend")
+    public List<HourlyTrend> userHourlyTrend(@PathVariable Long userId) {
+        return dashboardMapper.userHourlyTrend(userId);
+    }
 }

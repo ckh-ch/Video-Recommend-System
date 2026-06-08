@@ -8,7 +8,7 @@
         <div v-for="video in videos" :key="video.id" class="video-card">
           <div class="card-icon">{{ iconMap[video.category] || '🎬' }}</div>
           <div class="card-cat">{{ video.category }}</div>
-          <div class="card-tags">{{ video.tags }}</div>
+          <div class="card-id">#{{ video.id }}</div>
           <div class="card-actions">
             <button class="act-btn like" @click.stop="doLike(video)">👍 点赞</button>
             <button class="act-btn watch" @click.stop="doWatch(video)">👁️ 观看</button>
@@ -91,7 +91,7 @@ watch(() => props.userId, () => load(), { immediate: true })
 .video-card:hover { transform: translateY(-3px); border-color: rgba(59,130,246,.4); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
 .card-icon { font-size: 32px; }
 .card-cat { font-size: 13px; color: #fb7299; font-weight: 600; }
-.card-tags { font-size: 11px; color: #64748B; }
+.card-id { font-size: 11px; color: #64748B; }
 .card-actions { display: flex; gap: 4px; margin-top: 4px; }
 .act-btn {
   padding: 3px 8px; border: none; border-radius: 4px; font-size: 10px; cursor: pointer;
