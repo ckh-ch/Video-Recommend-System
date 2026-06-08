@@ -45,5 +45,5 @@ onBeforeUnmount(() => chart?.dispose())
 .chart-box { background: rgba(15,23,42,.8); border: 1px solid rgba(59,130,246,.15); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px); }
 .chart-title { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #F8FAFC; font-weight: 600; margin-bottom: 8px; }
 .title-dot { width: 3px; height: 14px; background: #8B5CF6; border-radius: 2px; }
-.chart-body { height: 200px; }
+.chart-body { height: auto; min-height: 320px; }
 </style>

@@ -14,20 +14,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { get } from '../../api/index.js'
 
-const actions = ref([])
+const props = defineProps({ userId: { type: Number, default: null } })
+const allActions = ref([])
 const listRef = ref(null)
 let timer = null
+
+const actions = computed(() => {
+  if (!props.userId) return allActions.value.slice(0, 20)
+  return allActions.value.filter(a => a.userId == props.userId).slice(0, 20)
+})
 
 async function fetchRealtime() {
   try {
     const res = await get('/dashboard/realtime')
     const raw = res.data.recentActions || []
-    actions.value = raw.map(s => {
+    allActions.value = raw.map(s => {
       try { return JSON.parse(s) } catch { return { userId: '?', category: '?', action: 'view', time: '' } }
-    }).slice(0, 20)
+    })
   } catch { /* ignore */ }
 }
 

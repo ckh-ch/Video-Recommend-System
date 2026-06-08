@@ -37,4 +37,25 @@ public interface DashboardMapper {
 
     @Select("SELECT video_category AS name, COUNT(*) AS value FROM user_behavior WHERE user_id = #{userId} GROUP BY video_category ORDER BY value DESC")
     List<CategoryDist> userCategoryInterests(@Param("userId") Long userId);
+
+    @Select("SELECT COUNT(*) FROM user_behavior WHERE user_id = #{userId}")
+    Long countUserBehaviors(@Param("userId") Long userId);
+
+    @Select("SELECT COUNT(DISTINCT video_category) FROM user_behavior WHERE user_id = #{userId}")
+    Long countUserCategories(@Param("userId") Long userId);
+
+    @Select("SELECT COALESCE(SUM(viewing_time), 0) FROM user_behavior WHERE user_id = #{userId}")
+    Double sumUserViewTime(@Param("userId") Long userId);
+
+    @Select("SELECT COALESCE(SUM(like_type), 0) FROM user_behavior WHERE user_id = #{userId} AND like_type = 1")
+    Long sumUserLikes(@Param("userId") Long userId);
+
+    @Select("SELECT video_category AS name, COUNT(*) AS value FROM user_behavior WHERE user_id = #{userId} GROUP BY video_category ORDER BY value DESC")
+    List<CategoryDist> userCategoryDistribution(@Param("userId") Long userId);
+
+    @Select("SELECT video_category AS category, AVG(viewing_time) AS avgViewTime, AVG(like_type) AS likeRate, AVG(relay_type) AS relayRate, COUNT(*) AS behaviorCount FROM user_behavior WHERE user_id = #{userId} GROUP BY video_category ORDER BY behaviorCount DESC")
+    List<BehaviorStat> userBehaviorStats(@Param("userId") Long userId);
+
+    @Select("SELECT HOUR(behavior_time) AS hour, COUNT(*) AS count FROM user_behavior WHERE user_id = #{userId} GROUP BY HOUR(behavior_time) ORDER BY hour")
+    List<HourlyTrend> userHourlyTrend(@Param("userId") Long userId);
 }
