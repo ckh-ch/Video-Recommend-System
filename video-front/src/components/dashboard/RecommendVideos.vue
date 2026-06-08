@@ -23,18 +23,12 @@
 <script setup>
 import { ref, watch } from 'vue'
 import api from '../../api/index.js'
+import { iconMap } from '../../constants.js'
 
 const props = defineProps({ userId: { type: Number, default: 85500 } })
 const videos = ref([])
 const loading = ref(false)
 const msg = ref('')
-
-const iconMap = {
-  food: '🍔', tourism: '✈️', amusement: '🎢', musics: '🎵',
-  'daily life': '🏠', fashion: '👗', movies: '🎬', cosmetics: '💄',
-  finance: '💰', technology: '💻', news: '📰', games: '🎮',
-  sports: '⚽', pets: '🐾', health: '💪', education: '📚'
-}
 
 async function load() {
   loading.value = true
