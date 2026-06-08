@@ -11,5 +11,4 @@ public class UserBehavior {
     private Integer relayType;
     private Double viewingTime;
     private LocalDateTime behaviorTime;
-    private LocalDateTime createdAt;
 }

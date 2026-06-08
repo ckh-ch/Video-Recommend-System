@@ -21,14 +21,30 @@ object ColdStartApp {
       .config("spark.sql.shuffle.partitions", "10")
       .getOrCreate()
 
-    println("=== 阶段1: 读取并清洗数据 ===")
-    val raw = spark.read
-      .option("header", "true")
-      .option("inferSchema", "true")
-      .csv(HDFS_PATH)
-      .na.drop(Seq("user_id", "video_id", "viewing_time"))
-      .filter("viewing_time > 0")
-      .dropDuplicates("user_id", "video_id", "time")
+    val isFirstRun = args.contains("--overwrite-behavior")
+
+    println("=== 读取训练数据 ===")
+    val raw = if (isFirstRun) {
+      println("首次运行：从 HDFS 读取原始数据")
+      spark.read
+        .option("header", "true")
+        .option("inferSchema", "true")
+        .csv(HDFS_PATH)
+        .na.drop(Seq("user_id", "video_id", "viewing_time"))
+        .filter("viewing_time > 0")
+        .dropDuplicates("user_id", "video_id", "time")
+    } else {
+      println("增量运行：从 MySQL user_behavior 读取全部数据（含原始 + 新行为）")
+      spark.read
+        .option("inferSchema", "true")
+        .jdbc(MYSQL_URL, "user_behavior", new java.util.Properties() {
+          put("user", MYSQL_USER); put("password", MYSQL_PWD)
+        })
+        .na.drop(Seq("user_id", "viewing_time"))
+        .filter("viewing_time > 0")
+        .dropDuplicates("user_id", "video_id")
+        .withColumnRenamed("behavior_time", "time")
+    }
 
     println(s"有效行为数: ${raw.count()}")
 
@@ -42,34 +58,38 @@ object ColdStartApp {
       .withColumn("tags", col("category"))
       .withColumn("view_count", lit(0))
 
-    println("=== 写入用户和视频到 MySQL ===")
-    usersDF.write.mode(SaveMode.Overwrite)
-      .option("batchsize", "1000")
-      .jdbc(MYSQL_URL, "users", new java.util.Properties() {
-        put("user", MYSQL_USER); put("password", MYSQL_PWD)
-      })
-    videosDF.write.mode(SaveMode.Overwrite)
-      .option("batchsize", "1000")
-      .jdbc(MYSQL_URL, "videos", new java.util.Properties() {
-        put("user", MYSQL_USER); put("password", MYSQL_PWD)
-      })
+    if (isFirstRun) {
+      println("=== 写入用户和视频到 MySQL ===")
+      usersDF.write.mode(SaveMode.Overwrite)
+        .option("batchsize", "1000")
+        .jdbc(MYSQL_URL, "users", new java.util.Properties() {
+          put("user", MYSQL_USER); put("password", MYSQL_PWD)
+        })
+      videosDF.write.mode(SaveMode.Overwrite)
+        .option("batchsize", "1000")
+        .jdbc(MYSQL_URL, "videos", new java.util.Properties() {
+          put("user", MYSQL_USER); put("password", MYSQL_PWD)
+        })
 
-    println("=== 写入原始行为数据到 user_behavior ===")
-    val behaviorDF = raw.select(
-      col("user_id"),
-      col("video_id"),
-      col("video_category"),
-      col("like_type"),
-      col("relay_type"),
-      col("time").as("behavior_time"),
-      col("viewing_time")
-    )
-    behaviorDF.write.mode(SaveMode.Overwrite)
-      .option("batchsize", "1000")
-      .jdbc(MYSQL_URL, "user_behavior", new java.util.Properties() {
-        put("user", MYSQL_USER); put("password", MYSQL_PWD)
-      })
-    println(s"写入行为数: ${behaviorDF.count()}")
+      println("=== 写入原始行为数据到 user_behavior ===")
+      val behaviorDF = raw.select(
+        col("user_id"),
+        col("video_id"),
+        col("video_category"),
+        col("like_type"),
+        col("relay_type"),
+        col("time").as("behavior_time"),
+        col("viewing_time")
+      )
+      behaviorDF.write.mode(SaveMode.Overwrite)
+        .option("batchsize", "1000")
+        .jdbc(MYSQL_URL, "user_behavior", new java.util.Properties() {
+          put("user", MYSQL_USER); put("password", MYSQL_PWD)
+        })
+      println(s"写入行为数: ${behaviorDF.count()}")
+    } else {
+      println("跳过首次初始化（users/videos/user_behavior 已有数据）")
+    }
 
     println("=== 阶段2: ALS 协同过滤训练 ===")
     import spark.implicits._

@@ -12,23 +12,16 @@
         </div>
       </div>
     </div>
-    <div v-if="msg" class="toast-msg">{{ msg }}</div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '../../api/index.js'
+import { iconMap } from '../../constants.js'
 
 const videos = ref([])
 const loading = ref(false)
-
-const iconMap = {
-  food: '🍔', tourism: '✈️', amusement: '🎢', musics: '🎵',
-  'daily life': '🏠', fashion: '👗', movies: '🎬', cosmetics: '💄',
-  finance: '💰', technology: '💻', news: '📰', games: '🎮',
-  sports: '⚽', pets: '🐾', health: '💪', education: '📚'
-}
 
 async function load() {
   loading.value = true
