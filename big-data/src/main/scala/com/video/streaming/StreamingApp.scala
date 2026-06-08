@@ -44,10 +44,19 @@ object StreamingApp {
 
             val jedis = new Jedis(REDIS_HOST, REDIS_PORT)
             try {
+              // 原有用户级统计
               jedis.hincrBy(s"profile:$uid:cats", category, 1)
               jedis.hincrBy(s"profile:$uid:stats", "totalWatch", 1)
               if (likeType == 1) jedis.hincrBy(s"profile:$uid:stats", "totalLike", 1)
               jedis.hincrByFloat(s"profile:$uid:stats", "totalViewTime", viewTime)
+
+              // 新增全局统计
+              jedis.incr("dashboard:total_behaviors")
+              jedis.zincrby("dashboard:category_counts", 1.0, category)
+              val now = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date())
+              val actionJson = s"""{"userId":$uid,"category":"$category","action":"${if (likeType == 1) "like" else "view"}","time":"$now"}"""
+              jedis.lpush("dashboard:recent_actions", actionJson)
+              jedis.ltrim("dashboard:recent_actions", 0, 49)
             } finally {
               jedis.close()
             }

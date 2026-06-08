@@ -1,15 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import RecommendPage from '../views/RecommendPage.vue'
-import HotPage from '../views/HotPage.vue'
-import VideoDetail from '../views/VideoDetail.vue'
-import UserProfile from '../views/UserProfile.vue'
+import DashboardPage from '../views/DashboardPage.vue'
 
 const routes = [
-  { path: '/', redirect: '/recommend/85500' },
-  { path: '/recommend/:userId', component: RecommendPage },
-  { path: '/hot', component: HotPage },
-  { path: '/video/:id', component: VideoDetail },
-  { path: '/profile/:userId', component: UserProfile }
+  { path: '/', redirect: '/dashboard' },
+  { path: '/dashboard', component: DashboardPage }
 ]
 
 const router = createRouter({
