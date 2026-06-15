@@ -7,7 +7,7 @@ import java.util.List;
 @Mapper
 public interface VideoMapper {
     @Select("SELECT * FROM videos WHERE category = #{category} LIMIT #{limit}")
-    List<Video> selectByCategory(String category, int limit);
+    List<Video> selectByCategory(@Param("category") String category, @Param("limit") int limit);
     @Select("SELECT * FROM videos ORDER BY view_count DESC LIMIT #{limit}")
     List<Video> selectHotVideos(int limit);
     @Select("<script> SELECT * FROM videos WHERE id IN <foreach item='id' collection='ids' open='(' separator=',' close=')'>#{id}</foreach> </script>")

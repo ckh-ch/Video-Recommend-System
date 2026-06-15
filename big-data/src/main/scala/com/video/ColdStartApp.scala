@@ -191,39 +191,6 @@ object ColdStartApp {
       }
     }
 
-    println("=== 计算大屏统计并写入 Redis ===")
-    val behaviorStats = raw.groupBy("video_category")
-      .agg(
-        avg("viewing_time").as("avgViewTime"),
-        avg("like_type").as("likeRate"),
-        avg("relay_type").as("relayRate"),
-        count("*").as("behaviorCount")
-      )
-      .orderBy(col("behaviorCount").desc)
-      .collect()
-      .map { row =>
-        val cat = row.getString(0)
-        val avgT = f"${row.getDouble(1)}%.1f"
-        val lr   = f"${row.getDouble(2)}%.4f"
-        val rr   = f"${row.getDouble(3)}%.4f"
-        val cnt  = row.getLong(4)
-        s"""{"category":"$cat","avgViewTime":$avgT,"likeRate":$lr,"relayRate":$rr,"behaviorCount":$cnt}"""
-      }
-      .mkString("[", ",", "]")
-
-    val hourlyTrend = raw.select(col("time"))
-      .withColumn("hour", hour(col("time")))
-      .groupBy("hour")
-      .agg(count("*").as("count"))
-      .orderBy("hour")
-      .collect()
-      .map { row =>
-        val h = row.getInt(0)
-        val c = row.getLong(1)
-        s"""{"hour":$h,"count":$c}"""
-      }
-      .mkString("[", ",", "]")
-
     println("=== 写入用户分类兴趣到 Redis ===")
     val userCats = raw.groupBy("user_id", "video_category")
       .agg(count("*").as("cnt"))
@@ -243,15 +210,6 @@ object ColdStartApp {
       println(s"已写入 ${userCats.size} 个用户的分类兴趣到 Redis")
     } finally {
       catJedis.close()
-    }
-
-    val cacheJedis = new Jedis(REDIS_HOST, REDIS_PORT)
-    try {
-      cacheJedis.setex("dashboard:behavior_stats", 86400L, behaviorStats)
-      cacheJedis.setex("dashboard:hourly_trend", 86400L, hourlyTrend)
-      println(s"大屏统计已写入 Redis: behavior_stats=${behaviorStats.length}字符, hourly_trend=${hourlyTrend.length}字符")
-    } finally {
-      cacheJedis.close()
     }
 
     jedis.close()

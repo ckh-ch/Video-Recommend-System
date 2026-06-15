@@ -1,11 +1,13 @@
 package org.example.videorecommend.controller;
+
+import tools.jackson.core.type.TypeReference;
+import org.example.videorecommend.config.RedisCacheUtil;
 import org.example.videorecommend.entity.*;
 import org.example.videorecommend.mapper.DashboardMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.core.type.TypeReference;
+
 import java.util.*;
 
 @RestController
@@ -14,63 +16,62 @@ public class DashboardController {
 
     @Autowired private DashboardMapper dashboardMapper;
     @Autowired(required = false) private StringRedisTemplate redisTemplate;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired private RedisCacheUtil cacheUtil;
+
+    private static final long CACHE_TTL = 300; // 5 分钟
 
     @GetMapping("/summary")
     public DashboardSummary summary() {
-        DashboardSummary s = new DashboardSummary();
-        s.setTotalVideos(dashboardMapper.countVideos());
-        s.setTotalUsers(dashboardMapper.countUsers());
-        s.setTotalBehaviors(dashboardMapper.countBehaviors());
-        s.setTotalCategories(dashboardMapper.countCategories());
-        return s;
+        return cacheUtil.get("dashboard:summary", CACHE_TTL, DashboardSummary.class, () -> {
+            DashboardSummary s = new DashboardSummary();
+            s.setTotalVideos(dashboardMapper.countVideos());
+            s.setTotalUsers(dashboardMapper.countUsers());
+            s.setTotalBehaviors(dashboardMapper.countBehaviors());
+            s.setTotalCategories(dashboardMapper.countCategories());
+            return s;
+        });
     }
 
     @GetMapping("/category-dist")
     public List<CategoryDist> categoryDist() {
-        return dashboardMapper.categoryDistribution();
+        return cacheUtil.get("dashboard:category-dist", CACHE_TTL,
+                new TypeReference<List<CategoryDist>>() {},
+                dashboardMapper::categoryDistribution);
     }
 
     @GetMapping("/activity-dist")
     public List<ActivityDist> activityDist() {
-        return dashboardMapper.activityDistribution();
+        return cacheUtil.get("dashboard:activity-dist", CACHE_TTL,
+                new TypeReference<List<ActivityDist>>() {},
+                dashboardMapper::activityDistribution);
     }
 
     @GetMapping("/behavior-stats")
-    public Object behaviorStats() {
-        if (redisTemplate != null) {
-            try {
-                String json = redisTemplate.opsForValue().get("dashboard:behavior_stats");
-                if (json != null) {
-                    return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-                }
-            } catch (Exception e) { /* fall through to MySQL */ }
-        }
-        return dashboardMapper.behaviorStats();
+    public List<BehaviorStat> behaviorStats() {
+        return cacheUtil.get("dashboard:behavior-stats", CACHE_TTL,
+                new TypeReference<List<BehaviorStat>>() {},
+                dashboardMapper::behaviorStats);
     }
 
     @GetMapping("/hourly-trend")
-    public Object hourlyTrend() {
-        if (redisTemplate != null) {
-            try {
-                String json = redisTemplate.opsForValue().get("dashboard:hourly_trend");
-                if (json != null) {
-                    return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-                }
-            } catch (Exception e) { /* fall through to MySQL */ }
-        }
-        return dashboardMapper.hourlyTrend();
+    public List<HourlyTrend> hourlyTrend() {
+        return cacheUtil.get("dashboard:hourly-trend", CACHE_TTL,
+                new TypeReference<List<HourlyTrend>>() {},
+                dashboardMapper::hourlyTrend);
     }
 
     @GetMapping("/recommend-overview")
     public Map<String, Object> recommendOverview() {
-        Long totalUsers = dashboardMapper.countUsers();
-        Long totalRecommends = dashboardMapper.countRecommends();
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("totalUsers", totalUsers);
-        result.put("totalRecommends", totalRecommends);
-        result.put("coverage", totalUsers > 0 ? (double) totalRecommends / totalUsers : 0);
-        return result;
+        return cacheUtil.get("dashboard:recommend-overview", CACHE_TTL,
+                new TypeReference<Map<String, Object>>() {}, () -> {
+            Long totalUsers = dashboardMapper.countUsers();
+            Long totalRecommends = dashboardMapper.countRecommends();
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("totalUsers", totalUsers);
+            result.put("totalRecommends", totalRecommends);
+            result.put("coverage", totalUsers > 0 ? (double) totalRecommends / totalUsers : 0);
+            return result;
+        });
     }
 
     @GetMapping("/realtime")
@@ -113,7 +114,6 @@ public class DashboardController {
     public Map<String, Object> userInterest(@PathVariable Long userId) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("userId", userId);
-        // 优先从 Redis 读取 (ColdStartApp 全量写入)
         if (redisTemplate != null) {
             try {
                 String key = "profile:" + userId + ":cats";
@@ -132,7 +132,6 @@ public class DashboardController {
                 }
             } catch (Exception e) { /* fall through to MySQL */ }
         }
-        // Redis 无数据则查 MySQL 兜底
         try {
             List<CategoryDist> dbTags = dashboardMapper.userCategoryInterests(userId);
             List<Map<String, Object>> tags = new ArrayList<>();
@@ -153,26 +152,35 @@ public class DashboardController {
 
     @GetMapping("/user/{userId}/summary")
     public Map<String, Object> userSummary(@PathVariable Long userId) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("totalBehaviors", dashboardMapper.countUserBehaviors(userId));
-        result.put("totalCategories", dashboardMapper.countUserCategories(userId));
-        result.put("totalViewTime", dashboardMapper.sumUserViewTime(userId));
-        result.put("totalLikes", dashboardMapper.sumUserLikes(userId));
-        return result;
+        String key = "dashboard:user:" + userId + ":summary";
+        return cacheUtil.get(key, CACHE_TTL, new TypeReference<Map<String, Object>>() {}, () -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("totalBehaviors", dashboardMapper.countUserBehaviors(userId));
+            result.put("totalCategories", dashboardMapper.countUserCategories(userId));
+            result.put("totalViewTime", dashboardMapper.sumUserViewTime(userId));
+            result.put("totalLikes", dashboardMapper.sumUserLikes(userId));
+            return result;
+        });
     }
 
     @GetMapping("/user/{userId}/category-dist")
     public List<CategoryDist> userCategoryDist(@PathVariable Long userId) {
-        return dashboardMapper.userCategoryDistribution(userId);
+        return cacheUtil.get("dashboard:user:" + userId + ":category-dist", CACHE_TTL,
+                new TypeReference<List<CategoryDist>>() {},
+                () -> dashboardMapper.userCategoryDistribution(userId));
     }
 
     @GetMapping("/user/{userId}/behavior-stats")
     public List<BehaviorStat> userBehaviorStats(@PathVariable Long userId) {
-        return dashboardMapper.userBehaviorStats(userId);
+        return cacheUtil.get("dashboard:user:" + userId + ":behavior-stats", CACHE_TTL,
+                new TypeReference<List<BehaviorStat>>() {},
+                () -> dashboardMapper.userBehaviorStats(userId));
     }
 
     @GetMapping("/user/{userId}/hourly-trend")
     public List<HourlyTrend> userHourlyTrend(@PathVariable Long userId) {
-        return dashboardMapper.userHourlyTrend(userId);
+        return cacheUtil.get("dashboard:user:" + userId + ":hourly-trend", CACHE_TTL,
+                new TypeReference<List<HourlyTrend>>() {},
+                () -> dashboardMapper.userHourlyTrend(userId));
     }
 }
