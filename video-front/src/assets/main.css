@@ -1,3 +1,303 @@
+/* ============================================
+   Design Tokens (CSS Custom Properties)
+   Source: DESIGN.md
+   ============================================ */
+:root {
+  /* Surface colors - solid blue-tinted scale (oklch-based) */
+  --color-surface-bg: #020617;        /* oklch(3.5% 0.018 260) */
+  --color-surface-card: #0E1525;     /* oklch(7% 0.03 260) — solid card surface */
+  --color-surface-elevated: #19253D; /* oklch(11% 0.04 260) — hover/raised */
+  --color-surface-container: #121B2E;/* oklch(8.5% 0.025 260) — KPI variant */
+  --color-primary: #3B82F6;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-border-subtle: rgba(59, 130, 246, 0.15);
+  --color-border-hover: rgba(59, 130, 246, 0.4);
+  --color-grid-line: #1E293B;
+
+  /* Accents */
+  --color-accent-pink: #fb7299;
+  --color-accent-green: #22C55E;
+  --color-accent-amber: #F59E0B;
+  --color-accent-purple: #8B5CF6;
+  --color-accent-cyan: #06B6D4;
+
+  /* Typography */
+  --font-sans: 'Fira Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Fira Code', monospace;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-grid: 14px;
+
+  /* Border Radius */
+  --radius-card: 12px;
+  --radius-tab: 6px;
+  --radius-tag: 16px;
+  --radius-video-card: 10px;
+  --radius-btn: 4px;
+  --radius-input: 4px;
+  --radius-toast: 8px;
+
+  /* Shadows */
+  --shadow-tab-active: 0 2px 8px rgba(59, 130, 246, 0.3);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.3);
+
+  /* Transitions */
+  --transition-default: all 0.2s ease;
+  --transition-fade: opacity 0.2s ease;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   Shared Component Classes
+   ============================================ */
+
+/* Base Dashboard Card — used for all chart containers */
+.dashboard-card {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-md);
+  transition: var(--transition-default);
+}
+.dashboard-card:hover {
+  background: var(--color-surface-elevated);
+  border-color: var(--color-border-hover);
+}
+
+/* KPI Card — more padding, distinct surface */
+.dashboard-card--kpi {
+  padding: var(--spacing-lg);
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  transition: var(--transition-default);
+  border-left: 2px solid transparent;
+}
+.dashboard-card--kpi:hover {
+  border-color: var(--color-border-hover);
+  border-left-color: var(--color-primary);
+  background: var(--color-surface-elevated);
+}
+
+/* Card Title Row (used inside .dashboard-card) */
+.dashboard-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  margin-bottom: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+/* Title indicator dot */
+.dashboard-card-dot {
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Chart body wrapper */
+.dashboard-card-body {
+  min-height: 260px;
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+}
+
+.kpi-card {
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: var(--transition-default);
+  border-left: 2px solid transparent;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-hover);
+  border-left-color: var(--color-primary);
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.kpi-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.kpi-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+/* Scrolling containers */
+.scroll-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: var(--spacing-xs);
+}
+.scroll-container::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+.scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 2px;
+}
+
+.scroll-track {
+  display: flex;
+  gap: 12px;
+  min-width: min-content;
+}
+
+.scroll-vertical {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.scroll-vertical::-webkit-scrollbar {
+  width: 3px;
+}
+.scroll-vertical::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 2px;
+}
+
+/* Tags */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 3px 10px;
+  border-radius: var(--radius-tag);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  transition: var(--transition-default);
+}
+.tag-chip:hover {
+  background: rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+.tag-name {
+  color: #E2E8F0;
+  font-weight: 500;
+}
+.tag-count {
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+}
+
+/* Video Card */
+.video-card {
+  min-width: 155px;
+  max-width: 155px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  border-radius: var(--radius-video-card);
+  padding: 14px 12px;
+  cursor: pointer;
+  transition: var(--transition-default);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.video-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: var(--shadow-card-hover);
+}
+.video-card-icon {
+  font-size: 32px;
+}
+.video-card-cat {
+  font-size: 13px;
+  color: var(--color-accent-pink);
+  font-weight: 600;
+}
+.video-card-id {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Action Buttons */
+.action-btn {
+  padding: 3px 8px;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-size: 10px;
+  cursor: pointer;
+  transition: var(--transition-default);
+  font-family: var(--font-sans);
+}
+.action-btn--like {
+  background: rgba(251, 114, 153, 0.15);
+  color: var(--color-accent-pink);
+}
+.action-btn--like:hover {
+  background: rgba(251, 114, 153, 0.3);
+}
+.action-btn--watch {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+}
+.action-btn--watch:hover {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+/* Empty state */
+.empty-state {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px 0;
+}
+
 #app {
   width: 100%;
   max-width: none;

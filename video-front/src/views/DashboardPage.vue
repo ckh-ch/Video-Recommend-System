@@ -12,7 +12,7 @@
         </div>
         <div v-if="mode === 'user'" class="user-switcher">
           <span class="switcher-label">用户ID：</span>
-          <input v-model.number="inputUserId" type="number" class="switcher-input" placeholder="输入用户ID" @keyup.enter="switchUser" />
+          <input v-model.number="inputUserId" type="number" class="switcher-input" placeholder="输入用户ID" min="1" @keyup.enter="switchUser" />
           <button @click="switchUser" class="switcher-btn">切换</button>
         </div>
         <div class="time">{{ currentTime }}</div>
@@ -93,6 +93,7 @@ import InterestTags from '../components/dashboard/InterestTags.vue'
 import RecommendVideos from '../components/dashboard/RecommendVideos.vue'
 import HotVideos from '../components/dashboard/HotVideos.vue'
 import DashboardSkeleton from '../components/dashboard/DashboardSkeleton.vue'
+import { useToast } from '../composables/useToast.js'
 
 // mode - 持久化到 localStorage，刷新不丢失
 const savedMode = localStorage.getItem('dashboard_mode')
@@ -127,9 +128,15 @@ const loading = ref(true)
 let timeTimer = null
 
 function switchUser() {
-  currentUserId.value = inputUserId.value
-  localStorage.setItem('dashboard_userId', String(inputUserId.value))
-  if (mode.value === 'user') fetchUserData(currentUserId.value)
+  const uid = Number(inputUserId.value)
+  if (!uid || uid < 1 || !Number.isInteger(uid)) {
+    useToast().show('请输入有效的用户 ID（正整数）', 'warning', 3000)
+    inputUserId.value = currentUserId.value
+    return
+  }
+  currentUserId.value = uid
+  localStorage.setItem('dashboard_userId', String(uid))
+  if (mode.value === 'user') fetchUserData(uid)
 }
 
 async function fetchData() {
@@ -142,6 +149,7 @@ async function fetchData() {
     }
   } catch (e) {
     console.error('Dashboard data fetch failed:', e)
+    useToast().show('仪表盘数据加载失败，请检查网络连接', 'error', 6000)
   }
   loading.value = false
 }
@@ -204,7 +212,7 @@ body { margin: 0; background: #020617; }
   margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
 }
 .title { font-size: 24px; font-weight: 700; color: #F8FAFC; margin: 0; letter-spacing: 1px; }
-.subtitle { font-size: 12px; color: #64748B; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.subtitle { font-size: 13px; color: #64748B; margin-top: 2px; }
 .time { font-family: 'Fira Code', monospace; font-size: 18px; color: #94A3B8; }
 
 .header-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -235,9 +243,23 @@ body { margin: 0; background: #020617; }
 
 .content { display: flex; flex-direction: column; gap: 14px; }
 
-.row-3c { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-.row-2c { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; align-items: stretch; }
+.row-3c { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--spacing-grid); }
+.row-2c { display: grid; grid-template-columns: 1fr 2fr; gap: var(--spacing-grid); align-items: stretch; }
 .row-full { display: grid; grid-template-columns: 1fr; }
+
+@media (max-width: 1400px) {
+  .row-3c { grid-template-columns: 1fr 1fr; }
+  .dashboard { padding: 16px; }
+}
+@media (max-width: 1024px) {
+  .row-3c { grid-template-columns: 1fr; }
+  .row-2c { grid-template-columns: 1fr; }
+  .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+@media (max-width: 640px) {
+  .dashboard { padding: 12px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: var(--spacing-sm); }
+}
 
 .col { min-width: 0; }
 .col-wide { min-width: 0; }

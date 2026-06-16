@@ -1,13 +1,13 @@
 <template>
-  <div class="chart-box">
-    <div class="chart-title"><span class="title-dot"></span>视频分类分布</div>
-    <div ref="chartRef" class="chart-body"></div>
+  <div class="dashboard-card">
+    <div class="dashboard-card-title"><span class="dashboard-card-dot" style="background:#3B82F6"></span>视频分类分布</div>
+    <div ref="chartRef" class="dashboard-card-body"></div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import * as echarts from 'echarts'
+import { init, graphic } from '../../libs/echarts.js'
 
 const props = defineProps({ data: { type: Array, default: () => [] } })
 const chartRef = ref(null)
@@ -15,9 +15,11 @@ let chart = null
 
 const colors = ['#3B82F6','#F59E0B','#22C55E','#fb7299','#8B5CF6','#06B6D4','#EC4899','#14B8A6','#F97316','#6366F1','#84CC16','#A855F7']
 
+let resizeObserver = null
+
 function render() {
   if (!chartRef.value) return
-  if (!chart) chart = echarts.init(chartRef.value)
+  if (!chart) chart = init(chartRef.value)
   chart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     series: [{
@@ -29,14 +31,14 @@ function render() {
   })
 }
 
-onMounted(render)
+onMounted(() => {
+  render()
+  resizeObserver = new ResizeObserver(() => chart?.resize())
+  if (chartRef.value) resizeObserver.observe(chartRef.value)
+})
 watch(() => props.data, render, { deep: true })
-onBeforeUnmount(() => chart?.dispose())
+onBeforeUnmount(() => { resizeObserver?.disconnect(); chart?.dispose() })
 </script>
 
 <style scoped>
-.chart-box { background: rgba(15,23,42,.8); border: 1px solid rgba(59,130,246,.15); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px); }
-.chart-title { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #F8FAFC; font-weight: 600; margin-bottom: 8px; }
-.title-dot { width: 3px; height: 14px; background: #3B82F6; border-radius: 2px; }
-.chart-body { height: 260px; }
 </style>

@@ -1,7 +1,7 @@
 <template>
-  <div class="chart-box">
-    <div class="chart-title"><span class="title-dot"></span>实时行为动态</div>
-    <div class="realtime-body" ref="listRef">
+  <div class="dashboard-card" style="display:flex;flex-direction:column">
+    <div class="dashboard-card-title"><span class="dashboard-card-dot" style="background:#F59E0B"></span>实时行为动态</div>
+    <div class="scroll-vertical" ref="listRef" style="min-height:260px;max-height:320px">
       <div v-if="actions.length === 0" class="empty">等待实时数据...</div>
       <div v-for="(act, i) in actions" :key="i" class="action-item" :style="{ animationDelay: i * 0.05 + 's' }">
         <span class="action-user">#{{ act.userId }}</span>
@@ -16,6 +16,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { get } from '../../api/index.js'
+import { useToast } from '../../composables/useToast.js'
 
 const props = defineProps({ userId: { type: Number, default: null } })
 const allActions = ref([])
@@ -34,7 +35,7 @@ async function fetchRealtime() {
     allActions.value = raw.map(s => {
       try { return JSON.parse(s) } catch { return { userId: '?', category: '?', action: 'view', time: '' } }
     })
-  } catch { /* ignore */ }
+  } catch { const t = useToast(); t.show('实时数据加载失败', 'warning') }
 }
 
 onMounted(() => {
@@ -45,12 +46,6 @@ onBeforeUnmount(() => clearInterval(timer))
 </script>
 
 <style scoped>
-.chart-box { background: rgba(15,23,42,.8); border: 1px solid rgba(59,130,246,.15); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px); }
-.chart-title { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #F8FAFC; font-weight: 600; margin-bottom: 8px; }
-.title-dot { width: 3px; height: 14px; background: #F59E0B; border-radius: 2px; }
-.realtime-body { height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
-.realtime-body::-webkit-scrollbar { width: 3px; }
-.realtime-body::-webkit-scrollbar-thumb { background: rgba(59,130,246,.3); border-radius: 2px; }
 .action-item {
   display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px;
   font-size: 12px; background: rgba(59,130,246,.05); animation: fadeIn .3s ease both;
@@ -62,6 +57,4 @@ onBeforeUnmount(() => clearInterval(timer))
 .action-type.view { background: rgba(59,130,246,.15); color: #60A5FA; }
 .action-cat { color: #94A3B8; flex: 1; }
 .action-time { color: #64748B; font-family: 'Fira Code', monospace; font-size: 11px; }
-.empty { color: #64748B; font-size: 13px; text-align: center; padding: 40px 0; }
-@keyframes fadeIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 </style>

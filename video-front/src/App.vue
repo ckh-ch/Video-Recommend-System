@@ -5,8 +5,13 @@
         <component :is="Component" />
       </transition>
     </router-view>
+    <ToastContainer />
   </div>
 </template>
+
+<script setup>
+import ToastContainer from './components/ToastContainer.vue'
+</script>
 
 <style>
 body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #020617; width: 100%; }

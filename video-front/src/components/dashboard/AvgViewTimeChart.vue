@@ -1,21 +1,23 @@
 <template>
-  <div class="chart-box">
-    <div class="chart-title"><span class="title-dot"></span>各分类平均观看时长</div>
-    <div ref="chartRef" class="chart-body"></div>
+  <div class="dashboard-card">
+    <div class="dashboard-card-title"><span class="dashboard-card-dot" style="background:#8B5CF6"></span>各分类平均观看时长</div>
+    <div ref="chartRef" class="dashboard-card-body"></div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import * as echarts from 'echarts'
+import { init, graphic } from '../../libs/echarts.js'
 
 const props = defineProps({ data: { type: Array, default: () => [] } })
 const chartRef = ref(null)
 let chart = null
 
+let resizeObserver = null
+
 function render() {
   if (!chartRef.value) return
-  if (!chart) chart = echarts.init(chartRef.value)
+  if (!chart) chart = init(chartRef.value)
   const sorted = [...props.data].sort((a, b) => a.avgViewTime - b.avgViewTime)
   chart.setOption({
     tooltip: {
@@ -28,7 +30,7 @@ function render() {
     series: [{
       type: 'bar', data: sorted.map(d => ({
         value: d.avgViewTime,
-        itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+        itemStyle: { color: new graphic.LinearGradient(0, 0, 1, 0, [
           { offset: 0, color: '#3B82F6' }, { offset: 1, color: '#8B5CF6' }
         ]), borderRadius: [0, 4, 4, 0] }
       })), barWidth: 12
@@ -36,14 +38,15 @@ function render() {
   })
 }
 
-onMounted(render)
+onMounted(() => {
+  render()
+  resizeObserver = new ResizeObserver(() => chart?.resize())
+  if (chartRef.value) resizeObserver.observe(chartRef.value)
+})
 watch(() => props.data, render, { deep: true })
-onBeforeUnmount(() => chart?.dispose())
+onBeforeUnmount(() => { resizeObserver?.disconnect(); chart?.dispose() })
 </script>
 
 <style scoped>
-.chart-box { background: rgba(15,23,42,.8); border: 1px solid rgba(59,130,246,.15); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px); }
-.chart-title { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #F8FAFC; font-weight: 600; margin-bottom: 8px; }
-.title-dot { width: 3px; height: 14px; background: #8B5CF6; border-radius: 2px; }
-.chart-body { height: auto; min-height: 320px; }
+.dashboard-card-body { height: auto; min-height: 320px; }
 </style>

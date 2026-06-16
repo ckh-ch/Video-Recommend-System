@@ -55,10 +55,16 @@ video-recommend-system/
 │       ├── views/
 │       │   └── DashboardPage.vue   # 大屏主页面（全局/用户双模式）
 │       ├── components/dashboard/   # 大屏图表组件（12个）
+│       ├── composables/            # 组合式函数
+│       │   ├── useToast.js         # 全局 Toast 通知
+│       │   ├── useCountUp.js       # 数值滚动动画
+│       │   └── useChartAutoResize.js # 图表自适应缩放
+│       ├── libs/
+│       │   └── echarts.js          # ECharts 按需导入封装
 │       ├── api/index.js            # Axios API 封装
 │       ├── router/index.js         # 路由（仅 /dashboard）
 │       ├── constants.js            # 共享常量
-│       └── assets/main.css         # 全局样式
+│       └── assets/main.css         # 全局样式 + CSS 自定义属性
 │
 ├── video-recommend/                # Spring Boot 后端
 │   └── src/main/java/org/example/videorecommend/
@@ -72,7 +78,8 @@ video-recommend-system/
 │       ├── config/
 │       │   ├── CorsConfig.java             # CORS 跨域配置
 │       │   ├── RedisCacheUtil.java         # 通用 Redis 缓存工具类
-│       │   └── CachePreWarm.java           # 启动预热（自动缓存慢查询）
+│       │   ├── CachePreWarm.java           # 启动预热（自动缓存慢查询）
+│       │   └── KafkaProducerConfig.java    # Kafka 生产者手动配置
 │       └── resources/
 │           ├── application.properties
 │           ├── schema.sql

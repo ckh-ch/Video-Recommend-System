@@ -24,7 +24,7 @@
       <div class="sk-chart sk-bar">
         <div class="sk-line w-28"></div>
         <div class="sk-bar-group">
-          <div v-for="i in 8" :key="'bar-'+i" class="sk-bar-item" :style="{ height: (30 + Math.random() * 60) + '%' }"></div>
+          <div v-for="i in 8" :key="'bar-'+i" class="sk-bar-item" :style="{ height: heights[i-1] + '%' }"></div>
         </div>
       </div>
     </div>
@@ -34,7 +34,7 @@
       <div class="sk-chart">
         <div class="sk-line w-24"></div>
         <div class="sk-tags">
-          <div v-for="i in 8" :key="'tag-'+i" class="sk-tag" :style="{ width: (40 + Math.random() * 40) + 'px' }"></div>
+          <div v-for="i in 8" :key="'tag-'+i" class="sk-tag" :style="{ width: tagWidths[i-1] }"></div>
         </div>
       </div>
       <div class="sk-chart">
@@ -58,6 +58,11 @@
     </div>
   </div>
 </template>
+
+<script setup>
+const heights = [35, 60, 45, 80, 55, 70, 30, 65]
+const tagWidths = ['60px', '45px', '75px', '50px', '65px', '40px', '55px', '70px']
+</script>
 
 <style scoped>
 .skeleton-dashboard { display: flex; flex-direction: column; gap: 14px; animation: sk-fade-in .3s ease; }

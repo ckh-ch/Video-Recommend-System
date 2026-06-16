@@ -5,6 +5,12 @@
 # 说明: HDFS CSV → ODS → DWD → MySQL user_behavior
 # =============================================
 
+export JAVA_HOME=/usr/local/jdk1.8.0_112
+export HADOOP_HOME=/usr/local/hadoop-3.3.6
+export HIVE_HOME=/usr/local/hive-3.1.3
+export SQOOP_HOME=/usr/local/sqoop-1.4.7
+export PATH=$JAVA_HOME/bin:$HADOOP_HOME/bin:$HIVE_HOME/bin:$SQOOP_HOME/bin:$PATH
+
 set -e
 BASE_DATE="2026-06-08"
 HDFS_RAW="/user/video-recommend/raw"
